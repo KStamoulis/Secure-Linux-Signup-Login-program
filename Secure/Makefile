@@ -1,7 +1,17 @@
 # Compiler and flags
 CXX = g++
 CXXFLAGS = -std=c++11 -Wall -Wextra
-LDFLAGS = -lssl -lcrypto
+
+# Linker Hardening Flags
+# 1. -Wl,-z,relro: Makes certain sections of the binary read-only after relocation.
+# 2. -Wl,-z,now: Resolves all symbols at startup to prevent PLT/GOT hijacking.
+LDFLAGS = -lssl -lcrypto -Wl,-z,relro -Wl,-z,now
+
+# Security Hardening Flags
+# 1. -fstack-protector-all: Adds stack canaries to all functions to prevent stack smashing.
+# 2. -D_FORTIFY_SOURCE=2: Adds checks for dangerous buffer operations at compile/runtime.
+# 3. -O2: Required for _FORTIFY_SOURCE to work effectively.
+HARDENING_FLAGS = -fstack-protector-all -D_FORTIFY_SOURCE=2 -O2
 
 # Target executable
 TARGET = secure_login
@@ -20,11 +30,11 @@ all: $(TARGET)
 
 # Link object files to create executable
 $(TARGET): $(OBJS)
-	$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJS) $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $(HARDENING_FLAGS) -o $(TARGET) $(OBJS) $(LDFLAGS)
 
 # Compile source files to object files
 %.o: %.cpp $(HEADERS)
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(HARDENING_FLAGS) -c $< -o $@
 
 # Clean build artifacts
 clean:
